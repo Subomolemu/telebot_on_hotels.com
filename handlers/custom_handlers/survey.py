@@ -5,8 +5,10 @@ from keyboards.reply.contact import request_contact
 
 
 @bot.message_handler(commands=['survey'])
-def survey(message: Message):
-    bot.set_state(message.from_user.id, UserInfoState.name, message.chat.id)
+def survey(message: Message) -> None:
+    bot.set_state(user_id=message.from_user.id,
+                  state=UserInfoState.name,
+                  chat_id=message.chat.id)
     bot.send_message(message.from_user.id, f'Привет, {message.from_user.username}, введи свое имя')
     
     
@@ -14,7 +16,9 @@ def survey(message: Message):
 def get_name(message: Message) -> None:
     if message.text.isalpha():
         bot.send_message(message.from_user.id, 'Спасибо, записал, теперь введи свой возраст')
-        bot.set_state(message.from_user.id, UserInfoState.age, message.chat.id)
+        bot.set_state(user_id=message.from_user.id,
+                      state=UserInfoState.age,
+                      chat_id=message.chat.id)
         
         with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
             data['name'] = message.text
@@ -26,8 +30,10 @@ def get_name(message: Message) -> None:
 def get_age(message: Message) -> None:
     if message.text.isdigit():
         bot.send_message(message.from_user.id, 'Спасибо, записал, теперь введи свою страну')
-        bot.set_state(message.from_user.id, UserInfoState.country, message.chat.id)
-        
+        bot.set_state(user_id=message.from_user.id,
+                      state=UserInfoState.country,
+                      chat_id=message.chat.id)
+
         with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
             data['age'] = message.text
     else:
@@ -37,18 +43,22 @@ def get_age(message: Message) -> None:
 @bot.message_handler(state=UserInfoState.country)
 def get_city(message: Message) -> None:
     bot.send_message(message.from_user.id, 'Спасибо, записал, теперь введи свой город')
-    bot.set_state(message.from_user.id, UserInfoState.city, message.chat.id)
-    
+    bot.set_state(user_id=message.from_user.id,
+                  state=UserInfoState.city,
+                  chat_id=message.chat.id)
+
     with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
         data['country'] = message.text
 
 
-@bot.message_handler(states=UserInfoState.city)
+@bot.message_handler(state=UserInfoState.city)
 def get_city(message: Message) -> None:
     bot.send_message(message.from_user.id, 'Спасибо, записал. Отправь свой номер телефона, '
                                            'нажав на кнопку', reply_markup=request_contact())
-    bot.set_state(message.from_user.id, UserInfoState.phone_number, message.chat.id)
-    
+    bot.set_state(user_id=message.from_user.id,
+                  state=UserInfoState.phone_number,
+                  chat_id=message.chat.id)
+
     with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
         data['city'] = message.text
         
@@ -56,9 +66,9 @@ def get_city(message: Message) -> None:
 @bot.message_handler(content_types=['text', 'contack'], state=UserInfoState.phone_number)
 def get_contact(message: Message) -> None:
     if message.content_type == 'contact':
+        
         with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
             data['phone_number'] = message.contact.phone_number
-            
             text = f'Спасибо за предоставленную информацию, ваши данные:\n' \
                    f'    Имя - {data["name"]}\n' \
                    f'    Возраст - {data["age"]}\n' \
