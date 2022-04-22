@@ -2,10 +2,10 @@ import requests
 import json
 
 
-def find_low_price(dest_id):
+def find_low_price(dest_id, date_in, date_out):
     url = "https://hotels4.p.rapidapi.com/properties/list"
     querystring = {"destinationId": dest_id, "pageNumber": "1", "pageSize": "25",
-                   "checkIn": "2022-03-17", "checkOut": "2022-03-18", "adults1": "1",
+                   f"checkIn": {str(date_in)}, "checkOut": f"{str(date_out)}", "adults1": "1",
                    "sortOrder": "PRICE", "locale": "ru_RU", "currency": "RUB"}
     headers = {'x-rapidapi-host': "hotels4.p.rapidapi.com",
                'x-rapidapi-key': "2c1b5f4d5fmsh8f0f682bedda6c4p144119jsnae88caba9b7c"}
