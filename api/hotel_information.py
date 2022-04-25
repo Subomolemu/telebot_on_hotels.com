@@ -10,7 +10,7 @@ def find_low_price(dest_id, date_in, date_out):
     headers = {'x-rapidapi-host': "hotels4.p.rapidapi.com",
                'x-rapidapi-key': "2c1b5f4d5fmsh8f0f682bedda6c4p144119jsnae88caba9b7c"}
     try:
-        response = requests.request("GET", url, headers=headers, params=querystring)
+        response = requests.request("GET", url, headers=headers, params=querystring, timeout=10)
         if response.status_code == requests.codes.ok:
             jsons = json.loads(response.text)
             res = jsons['data']['body']['searchResults'].get('results')

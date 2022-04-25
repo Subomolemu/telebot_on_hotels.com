@@ -13,7 +13,7 @@ def get_photos(hotel_id, count) -> List:
                'x-rapidapi-key': "2c1b5f4d5fmsh8f0f682bedda6c4p144119jsnae88caba9b7c"}
     
     try:
-        response = requests.request("GET", url, headers=headers, params=querystring)
+        response = requests.request("GET", url, headers=headers, params=querystring, timeout=10)
         if response.status_code == requests.codes.ok:
             date_photo = json.loads(response.text)
             total_photo = date_photo['hotelImages']

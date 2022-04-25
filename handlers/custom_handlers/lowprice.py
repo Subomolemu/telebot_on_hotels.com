@@ -3,8 +3,8 @@ from states.city_information import CityInfoState
 from telebot.types import Message
 from api import city_group, hotel_information, get_photos
 from keyboards import reply
-from datetime import datetime, date
-import re
+from datetime import datetime, date, timedelta
+from telegram_bot_calendar import DetailedTelegramCalendar
 
 
 @bot.message_handler(commands=['lowprice'])
@@ -22,6 +22,7 @@ def area(message: Message) -> None:
             for city_name in i_dict:
                 data[city_name] = i_dict[city_name]
         data['city_name'] = message.text
+        data['user_id'] = message.from_user.id
         bot.send_message(message.from_user.id, 'Пожалуйста, уточните ваш выбор',
                          reply_markup=reply.areas.get_areas(message.text))
 
@@ -35,78 +36,65 @@ def date_in(message: Message) -> None:
     with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
         if message.text in data:
             data['dest_id'] = data[message.text]
-            bot.send_message(message.from_user.id, 'Введите дату въезда\n'
-                                                   'Пример введенный даты: 2022-01-31')
-            bot.set_state(user_id=message.from_user.id,
-                          state=CityInfoState.date_out,
-                          chat_id=message.chat.id)
+            data['min_date'] = str(date.today())
+            calendar, step = DetailedTelegramCalendar(calendar_id=1,
+                                                      min_date=date.today(),
+                                                      locale='ru').build()
+            bot.send_message(message.from_user.id, f"Выбираем дату", reply_markup=calendar)
+
         else:
             bot.send_message(message.from_user.id, 'Просто нажмите на кнопку ниже',
                              reply_markup=reply.areas.get_areas(data['city_name']))
 
 
-@bot.message_handler(state=CityInfoState.date_out)
-def date_out(message: Message) -> None:
-    try:
-        date_pt = re.search(r'\d{4}-\d{2}-\d{2}', message.text)
-        if date_pt.group():
-            date_format = "%Y-%m-%d"
-            now = date.today()
-            selected_date_in = datetime.strptime(message.text, date_format).date()
-            if selected_date_in < now:
-                bot.send_message(message.from_user.id, f'Ошибка ввода\n'
-                                                       f'Введите дату въезда не ранее чем {now}\n'
-                                                       f'Пример введенный даты: 2022-01-31')
-            else:
-                bot.send_message(message.from_user.id, 'Введите дату выезда\n'
-                                                       'Пример введенный даты: 2022-01-31')
-                bot.set_state(user_id=message.from_user.id,
-                              state=CityInfoState.total_hotels,
-                              chat_id=message.chat.id)
-
-                with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
-                    data['date_in'] = message.text
-        else:
-            bot.send_message(message.from_user.id, 'Ошибка ввода\n'
-                                                   'Введите дату въезда\n'
-                                                   'Пример введенный даты: 2022-01-31')
-    except ValueError:
-        bot.send_message(message.from_user.id, 'Ошибка значения даты\n'
-                                               'Введите дату въезда\n'
-                                               'Пример введенный даты: 2022-01-31\n'
-                                               'Обратите внимание на количество месяцев и дней в выбранном месяце')
+@bot.callback_query_handler(func=DetailedTelegramCalendar.func(calendar_id=1),
+                            state=CityInfoState.date_in)
+def date_out(call) -> None:
+    result, key, step = DetailedTelegramCalendar(calendar_id=1, min_date=date.today(), locale='ru').process(call.data)
+    if not result and key:
+        bot.edit_message_text(f"Выбираем дату",
+                              call.message.chat.id,
+                              call.message.message_id,
+                              reply_markup=key)
+    elif result:
+        bot.edit_message_text(f"Даты въезда: {result}",
+                              call.message.chat.id,
+                              call.message.message_id)
+        with bot.retrieve_data(call.message.chat.id) as data:
+            data['date_in'] = str(result)
+            bot.set_state(user_id=data['user_id'],
+                          state=CityInfoState.date_out,
+                          chat_id=call.message.chat.id)
+            calendar, step = DetailedTelegramCalendar(calendar_id=2,
+                                                      min_date=datetime.strptime(data['date_in'], "%Y-%m-%d").date(),
+                                                      locale='ru').build()
+            bot.send_message(call.from_user.id, f"Выбираем дату", reply_markup=calendar)
 
 
-@bot.message_handler(state=CityInfoState.total_hotels)
-def total_hotels(message: Message) -> None:
-    try:
-        date_pt = re.search(r'\d{4}-\d{2}-\d{2}', message.text)
-        with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
-            if date_pt.group():
-                date_format = "%Y-%m-%d"
-                selected_date_in = datetime.strptime(data['date_in'], date_format).date()
-                selected_date_out = datetime.strptime(message.text, date_format).date()
-
-                if selected_date_in >= selected_date_out:
-                    bot.send_message(message.from_user.id, f'Ошибка ввода\n'
-                                                           f'Введите дату выезда не ранее чем {selected_date_in}\n'
-                                                           f'Пример введенный даты: 2022-01-31')
-                else:
-                    bot.send_message(message.from_user.id, 'Выберите количество отелей',
-                                     reply_markup=reply.total_hotels.get_kb())
-                    bot.set_state(user_id=message.from_user.id,
-                                  state=CityInfoState.get_photos,
-                                  chat_id=message.chat.id)
-                    data['date_out'] = message.text
-            else:
-                bot.send_message(message.from_user.id, 'Ошибка ввода\n'
-                                                       'Введите дату выезда\n'
-                                                       'Пример введенный даты: 2022-01-31')
-    except ValueError:
-        bot.send_message(message.from_user.id, 'Ошибка значения даты\n'
-                                               'Введите дату въезда\n'
-                                               'Пример введенный даты: 2022-01-31\n'
-                                               'Обратите внимание на количество месяцев и дней в выбранном месяце')
+@bot.callback_query_handler(func=DetailedTelegramCalendar.func(calendar_id=2),
+                            state=CityInfoState.date_out)
+def total_hotels(call) -> None:
+    with bot.retrieve_data(call.message.chat.id) as data:
+        select_date = datetime.strptime(data['date_in'], "%Y-%m-%d").date() + timedelta(days=1)
+        result, key, step = DetailedTelegramCalendar(calendar_id=2,
+                                                     min_date=select_date,
+                                                     locale='ru').process(
+            call.data)
+        if not result and key:
+            bot.edit_message_text(f"Выбираем дату",
+                                  call.message.chat.id,
+                                  call.message.message_id,
+                                  reply_markup=key)
+        elif result:
+            data['date_out'] = str(result)
+            bot.edit_message_text(f"Дата выезда: {result}",
+                                  call.message.chat.id,
+                                  call.message.message_id)
+            bot.send_message(call.message.chat.id, 'Выберите количество отелей',
+                             reply_markup=reply.total_hotels.get_kb())
+            bot.set_state(user_id=data['user_id'],
+                          state=CityInfoState.get_photos,
+                          chat_id=call.message.chat.id)
 
 
 @bot.message_handler(state=CityInfoState.get_photos)
