@@ -139,7 +139,7 @@ def answer_photo(message: Message) -> None:
                            f'\thttps://hotels.com/ho{i_date["id"]}'
                     bot.send_message(message.from_user.id, text)
         else:
-            bot.send_message(message.from_user.id, 'Просто нажмите на кнопку ниже', reply_markup=out_photo.get_kb())
+            bot.send_message(message.from_user.id, 'Просто нажмите на кнопку ниже', reply_markup=reply.out_photo.get_kb())
 
 
 @bot.message_handler(state=CityInfoState.total_photos)
@@ -149,7 +149,7 @@ def out_photo(message: Message) -> None:
         with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
             data['total_photos'] = int(message.text)
 
-            bot.send_message(message.from_user.id, 'Выполняется поиск по заданным параметра:')
+            bot.send_message(message.from_user.id, 'Выполняется поиск по заданным параметрам:')
             dist_id = data['dest_id']
             for i, i_date in enumerate(hotel_information.find_low_price(dist_id, data['date_in'], data['date_out'])):
                 if i == int(data['total_hotels']):
