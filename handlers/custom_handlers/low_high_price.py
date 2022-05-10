@@ -7,13 +7,15 @@ from datetime import datetime, date, timedelta
 from telegram_bot_calendar import DetailedTelegramCalendar
 
 
-@bot.message_handler(commands=['lowprice'])
+@bot.message_handler(commands=['lowprice', 'highprice'])
 def city(message: Message) -> None:
+
     bot.set_state(user_id=message.from_user.id,
                   state=CityInfoState.selected_city,
                   chat_id=message.chat.id)
     bot.send_message(message.from_user.id, f'Введите название города')
-
+    with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
+        data['command'] = message.text
 
 @bot.message_handler(state=CityInfoState.selected_city)
 def area(message: Message) -> None:
@@ -126,7 +128,12 @@ def answer_photo(message: Message) -> None:
         elif message.text == "Нет":
             bot.send_message(message.from_user.id, 'Выполняется поиск по заданным параметрам')
             dist_id = data['dest_id']
-            for i, i_date in enumerate(hotel_information.find_low_price(dist_id, data['date_in'], data['date_out'])):
+            if data['command'] == '/lowprice':
+                sort_order = 'PRICE'
+            elif data['command'] == '/highprice':
+                sort_order = 'PRICE_HIGHEST_FIRST'
+            for i, i_date in enumerate(hotel_information.find_low_price(dist_id, data['date_in'],
+                                                                        data['date_out'], sort_order)):
                 if i == int(data['total_hotels']):
                     break
                 else:
@@ -139,7 +146,8 @@ def answer_photo(message: Message) -> None:
                            f'\thttps://hotels.com/ho{i_date["id"]}'
                     bot.send_message(message.from_user.id, text)
         else:
-            bot.send_message(message.from_user.id, 'Просто нажмите на кнопку ниже', reply_markup=reply.out_photo.get_kb())
+            bot.send_message(message.from_user.id, 'Просто нажмите на кнопку ниже',
+                             reply_markup=reply.out_photo.get_kb())
 
 
 @bot.message_handler(state=CityInfoState.total_photos)
@@ -151,7 +159,12 @@ def out_photo(message: Message) -> None:
 
             bot.send_message(message.from_user.id, 'Выполняется поиск по заданным параметрам:')
             dist_id = data['dest_id']
-            for i, i_date in enumerate(hotel_information.find_low_price(dist_id, data['date_in'], data['date_out'])):
+            if data['command'] == '/lowprice':
+                sort_order = 'PRICE'
+            elif data['command'] == '/highprice':
+                sort_order = 'PRICE_HIGHEST_FIRST'
+            for i, i_date in enumerate(hotel_information.find_low_price(dist_id, data['date_in'],
+                                                                        data['date_out'], sort_order)):
                 if i == int(data['total_hotels']):
                     break
 
@@ -163,12 +176,10 @@ def out_photo(message: Message) -> None:
                            f'\tРасстояние до центра: {i_date["landmarks"][0]["distance"]}\n' \
                            f'\tЦена за сутки: {i_date["ratePlan"]["price"]["current"]}\n' \
                            f'\thttps://hotels.com/ho{i_date["id"]}'
-
                     bot.send_message(message.from_user.id, text)
                     bot.send_media_group(message.from_user.id,
                                          get_photos.get_photos(i_date["id"],
                                                                data['total_photos']))
-
     else:
         bot.send_message(message.from_user.id, 'Просто нажмите на кнопку',
                          reply_markup=reply.total_photo.get_kb())
