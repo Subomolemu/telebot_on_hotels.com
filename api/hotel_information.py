@@ -20,7 +20,9 @@ def find_low_price(dest_id, date_in, date_out, sort_order):
             for date in res:
                 try:
                     lst_key = [date["address"]["countryName"], date["address"]["region"], date["address"]["locality"],
-                               date["address"]["streetAddress"], date["name"], date["name"], date["id"]]
+                               date["address"]["streetAddress"], date["name"], date["name"], date["id"],
+                               date["landmarks"][0]["distance"], date["ratePlan"]["price"]["current"],
+                               date["ratePlan"]["price"]["exactCurrent"]]
                     if not lst_key:
                         raise KeyError
                 except KeyError:

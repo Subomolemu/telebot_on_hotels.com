@@ -5,6 +5,7 @@ from api import city_group, hotel_information, get_photos
 from keyboards import reply
 from datetime import datetime, date, timedelta
 from telegram_bot_calendar import DetailedTelegramCalendar
+from utils.misc.find_day import days
 
 
 @bot.message_handler(commands=['lowprice', 'highprice'])
@@ -89,6 +90,7 @@ def total_hotels(call) -> None:
                                   reply_markup=key)
         elif result:
             data['date_out'] = str(result)
+            data['all_day'] = days(day_in=data['date_in'], day_out=data['date_out'])
             bot.edit_message_text(f"Дата выезда: {result}",
                                   call.message.chat.id,
                                   call.message.message_id)
@@ -139,10 +141,13 @@ def answer_photo(message: Message) -> None:
                 else:
                     address = f'{i_date["address"]["countryName"]}, {i_date["address"]["region"]}, ' \
                               f'{i_date["address"]["locality"]}, {i_date["address"]["streetAddress"]}'
+                    full_price = data["all_day"] * int(i_date["ratePlan"]["price"]["exactCurrent"])
+                    edited_price = format(full_price, ',')
                     text = f'{i + 1}) Название отеля: {i_date["name"]}\n' \
                            f'\tАдрес: {address}\n' \
                            f'\tРасстояние до центра: {i_date["landmarks"][0]["distance"]}\n' \
-                           f'\tЦена за сутки: {i_date["ratePlan"]["price"]["current"]}\n' \
+                           f'\tЦена за сутки: {i_date["ratePlan"]["price"]["current"]}\n'\
+                           f'\tЦена за все время: {edited_price} RUB'\
                            f'\thttps://hotels.com/ho{i_date["id"]}'
                     bot.send_message(message.from_user.id, text)
         else:
@@ -171,10 +176,13 @@ def out_photo(message: Message) -> None:
                 else:
                     address = f'{i_date["address"]["countryName"]}, {i_date["address"]["region"]}, ' \
                               f'{i_date["address"]["locality"]}, {i_date["address"]["streetAddress"]}'
+                    full_price = data["all_day"] * int(i_date["ratePlan"]["price"]["exactCurrent"])
+                    edited_price = format(full_price, ',')
                     text = f'{i + 1}) Название отеля: {i_date["name"]}\n' \
                            f'\tАдрес: {address}\n' \
                            f'\tРасстояние до центра: {i_date["landmarks"][0]["distance"]}\n' \
                            f'\tЦена за сутки: {i_date["ratePlan"]["price"]["current"]}\n' \
+                           f'\tЦена за все время: {edited_price} RUB\n' \
                            f'\thttps://hotels.com/ho{i_date["id"]}'
                     bot.send_message(message.from_user.id, text)
                     bot.send_media_group(message.from_user.id,
