@@ -1,4 +1,5 @@
 from requests.exceptions import ConnectTimeout, ReadTimeout
+from urllib3.exceptions import ReadTimeoutError
 import requests
 
 
@@ -7,5 +8,6 @@ def request_to_api(url, headers, querystring):
         response = requests.request("GET", url, headers=headers, params=querystring, timeout=10)
         if response.status_code == requests.codes.ok:
             return response.text
-    except ConnectTimeout or ReadTimeout:
+    except (ConnectTimeout, ReadTimeout, ReadTimeoutError) as err:
+        print(type(err), err)
         return None
