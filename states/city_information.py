@@ -2,6 +2,9 @@ from telebot.handler_backends import State, StatesGroup
 
 
 class CityInfoState(StatesGroup):
+    """
+    Класс состояния пользователя для прохождения сценария
+    """
     selected_city = State()
     qualifying_choice = State()
     min_max_price = State()

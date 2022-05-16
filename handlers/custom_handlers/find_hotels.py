@@ -323,7 +323,7 @@ def out_photo(message: Message) -> None:
         with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
             data['total_photos'] = int(message.text)
 
-            get_results.results(message=message, data=data, flag=True)
+            get_results.results(message=message, data=data, out_foto=True)
             bot.set_state(user_id=message.from_user.id,
                           state=CityInfoState.selected_city,
                           chat_id=message.chat.id)

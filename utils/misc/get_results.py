@@ -1,8 +1,18 @@
 from api import hotel_information, get_photos
 from loader import bot
+from telebot.types import Message
+from typing import Dict
 
 
-def results(message, data, sort_order='PRICE', flag=False):
+def results(message: Message, data: Dict, sort_order: str = 'PRICE', out_foto: bool = False) -> None:
+    """
+    Функция, предназначенная, для поиска и вывода пользователю информации об отеле
+
+    :param message: сообщение от пользователя в боте.
+    :param data: словарь с информацией, собранной ботом от пользователя.
+    :param sort_order: метод сортировки результатов вывода отелей по убыванию либо возрастанию цены.
+    :param out_foto: True для вывода фото и False, если вывод фото не нужен
+    """
     bot.send_message(message.from_user.id, 'Выполняется поиск по заданным параметрам:')
     dist_id = data['dest_id']
     if data['command'] == '/highprice':
@@ -57,7 +67,7 @@ def results(message, data, sort_order='PRICE', flag=False):
                        f'\tЦена за все время: {edited_price} RUB\n' \
                        f'\thttps://hotels.com/ho{i_date["id"]}'
                 bot.send_message(message.from_user.id, text)
-                if flag:
+                if out_foto:
                     bot.send_media_group(message.from_user.id,
                                          get_photos.get_photos(i_date["id"],
                                                                int(data['total_photos'])))
