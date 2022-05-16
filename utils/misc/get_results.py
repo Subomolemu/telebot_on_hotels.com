@@ -15,6 +15,7 @@ def results(message, data, sort_order='PRICE', flag=False):
     while can_iter:
         page += 1
         print('поиск на странице', page)
+        bot.send_message(message.from_user.id, 'Пожалуйста, подождите')
         total_iter = (sum(1 for _ in hotel_information.find_hotels(dest_id=dist_id,
                                                                    date_in=data['date_in'],
                                                                    date_out=data['date_out'],

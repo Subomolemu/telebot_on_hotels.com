@@ -5,6 +5,9 @@ from loader import bot
 
 
 @bot.message_handler(commands=['help'])
-def bot_help(message: Message):
+def bot_help(message: Message) -> None:
+    """
+    Функция предназначена для вывода информации о возможных командах для бота
+    """
     text = [f'/{command} - {desk}' for command, desk in DEFAULT_COMMANDS]
     bot.reply_to(message, '\n'.join(text))
