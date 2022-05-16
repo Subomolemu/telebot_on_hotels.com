@@ -59,7 +59,7 @@ def results(message, data, sort_order='PRICE', flag=False):
                 if flag:
                     bot.send_media_group(message.from_user.id,
                                          get_photos.get_photos(i_date["id"],
-                                                               data['total_photos']))
+                                                               int(data['total_photos'])))
             if total_iter < total_hotels:
                 if i + 1 == total_iter:
                     total_hotels -= total_iter
