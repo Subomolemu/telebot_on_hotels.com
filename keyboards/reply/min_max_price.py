@@ -1,7 +1,12 @@
 from telebot.types import ReplyKeyboardMarkup, KeyboardButton
 
 
-def take_price():
+def take_price() -> ReplyKeyboardMarkup:
+    """
+    Функция, предназначенная для вывода Reply клавиатуры с уточняющим выбором цен отелей
+
+    :return: ReplyKeyboardMarkup
+    """
     keyboard = ReplyKeyboardMarkup(True, True)
     kb_1 = KeyboardButton(text='0 - 4999')
     kb_2 = KeyboardButton(text='5000 - 9999')

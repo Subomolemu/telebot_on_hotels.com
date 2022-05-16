@@ -1,7 +1,13 @@
 from telebot.types import ReplyKeyboardMarkup, KeyboardButton
 
 
-def get_kb():
+def get_kb() -> ReplyKeyboardMarkup:
+    """
+    Функция, предназначенная для вывода Reply клавиатуры с уточняющим выбором длины списка отелей,
+    которые выведет бот
+
+    :return: ReplyKeyboardMarkup
+    """
     keyboard = ReplyKeyboardMarkup(True, True)
     kb_1 = KeyboardButton(text='3')
     kb_2 = KeyboardButton(text='5')

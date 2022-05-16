@@ -1,7 +1,12 @@
 from telebot.types import ReplyKeyboardMarkup, KeyboardButton
 
 
-def take_local():
+def take_local() -> ReplyKeyboardMarkup:
+    """
+    Функция, предназначенная для вывода Reply клавиатуры с уточняющим выбором диапазона удаленности отелей от центра
+
+    :return: ReplyKeyboardMarkup
+    """
     keyboard = ReplyKeyboardMarkup(True, True)
     kb_1 = KeyboardButton(text='0 - 1')
     kb_2 = KeyboardButton(text='1 - 3')
