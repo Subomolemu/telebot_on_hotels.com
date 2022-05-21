@@ -15,3 +15,4 @@ class CityInfoState(StatesGroup):
     total_photos = State()
     get_photos = State()
     photo_output = State()
+    end = State()

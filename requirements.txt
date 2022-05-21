@@ -3,3 +3,6 @@ python-telegram-bot-calendar==1.0.5
 python-dotenv==0.19.2
 requests~=2.27.1
 telebot~=0.0.4
+loguru~=0.6.0
+urllib3~=1.26.9
+peewee~=3.14.10
