@@ -300,8 +300,8 @@ def answer_photo(message: Message) -> None:
         elif message.text == "Нет":
             data['hotels'] = get_results.results(message=message, data=data, out_foto=False)
             if not data['hotels']:
-                bot.send_message('Произошла ошибка, начните поиска снова. Текущая команда:'
-                                 f'{data["command"]}')
+                bot.send_message(message.from_user.id,
+                                 f'Произошла ошибка, начните поиска снова. Текущая команда: \n{data["command"]}')
             command_date = str(datetime.utcfromtimestamp(message.date + 10800))
             db_add_info.add(user_id=data['user_id'], command_date=command_date, command=data['command'],
                             hotels=data['hotels'])
@@ -326,17 +326,20 @@ def out_photo(message: Message) -> None:
 
             data['hotels'] = get_results.results(message=message, data=data, out_foto=True)
             if not data['hotels']:
-                bot.send_message('Произошла ошибка, начните поиска снова. Текущая команда:'
-                                 f'{data["command"]}')
-            command_date = str(datetime.utcfromtimestamp(message.date + 10800))
-            db_add_info.add(user_id=data['user_id'], command_date=command_date, command=data['command'],
-                            hotels=data['hotels'])
+                bot.send_message(message.from_user.id,
+                                 f'Произошла ошибка, возможно необходимо уменьшить количество фотографий при выводе, '
+                                 f'начните поиска снова. Текущая команда: \n{data["command"]}')
+            else:
+                command_date = str(datetime.utcfromtimestamp(message.date + 10800))
+                db_add_info.add(user_id=data['user_id'], command_date=command_date, command=data['command'],
+                                hotels=data['hotels'])
+                bot.send_message(message.from_user.id, 'Вы можете ввести новую команду для поиска\n'
+                                                       f'Текущая команда "{data["command"]}"\n'
+                                                       f'Для получения справки -> "/help"')
             bot.set_state(user_id=message.from_user.id,
                           state=CityInfoState.end,
                           chat_id=message.chat.id)
-            bot.send_message(message.from_user.id, 'Вы можете ввести новую команду для поиска\n'
-                                                   f'Текущая команда "{data["command"]}"\n'
-                                                   f'Для получения справки -> "/help"')
+
 
     else:
         bot.send_message(message.from_user.id, 'Просто нажмите на кнопку',

@@ -67,12 +67,17 @@ def results(message: Message, data: Dict, sort_order: str = 'PRICE', out_foto: b
                     bot.send_message(message.from_user.id, text)
 
                     if out_foto:
-                        bot.send_media_group(message.from_user.id,
-                                             get_photos.get_photos(i_date["id"],
-                                                                   int(data['total_photos'])))
+                        try:
+                            bot.send_media_group(message.from_user.id,
+                                                 get_photos.get_photos(i_date["id"],
+                                                                       int(data['total_photos'])))
+                        except 'ERROR - TeleBot' as err:
+                            print(print(type(err), err))
+                            return None
+
                 if total_iter < total_hotels:
                     if i + 1 == total_iter:
                         total_hotels -= total_iter
         except TypeError as err:
             print(type(err), err)
-
+            return None

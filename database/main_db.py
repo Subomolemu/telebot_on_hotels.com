@@ -1,4 +1,4 @@
-from peewee import *
+from peewee import SqliteDatabase, Model, CharField
 
 
 db = SqliteDatabase('history.db')
@@ -17,4 +17,5 @@ class Info(BaseModel):
     hotels = CharField()
 
 
-db.create_tables([Info])
+with db:
+    db.create_tables([Info])
