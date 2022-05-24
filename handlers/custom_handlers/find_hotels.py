@@ -306,7 +306,8 @@ def answer_photo(message: Message) -> None:
             data['hotels'] = get_results.results(message=message, data=data, out_foto=False)
             if not data['hotels']:
                 bot.send_message(message.from_user.id,
-                                 f'Произошла ошибка, начните поиск снова. Текущая команда: \n{data["command"]}')
+                                 f'Ничего не найдено, возможно стоит изменить параметры поиска, '
+                                 f'начните поиска снова. Текущая команда: \n{data["command"]}')
             db_add_info.add(user_id=data['user_id'], command_date=data['command_date'], command=data['command'],
                             hotels=data['hotels'])
         else:
@@ -331,7 +332,7 @@ def out_photo(message: Message) -> None:
             data['hotels'] = get_results.results(message=message, data=data, out_foto=True)
             if not data['hotels']:
                 bot.send_message(message.from_user.id,
-                                 f'Произошла ошибка, возможно стоит изменить параметры поиска, '
+                                 f'Ничего не найдено, возможно стоит изменить параметры поиска, '
                                  f'начните поиска снова. Текущая команда: \n{data["command"]}')
             else:
                 db_add_info.add(user_id=data['user_id'], command_date=data['command_date'], command=data['command'],
