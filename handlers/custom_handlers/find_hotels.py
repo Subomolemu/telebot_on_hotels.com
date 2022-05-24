@@ -7,6 +7,7 @@ from keyboards import reply
 from datetime import datetime, date, timedelta
 from telegram_bot_calendar import DetailedTelegramCalendar
 from utils.misc import find_day, get_results
+from database import db_add_info
 
 
 @bot.message_handler(commands=['lowprice', 'highprice', 'bestdeal'],
@@ -25,8 +26,7 @@ def city(message: Message) -> None:
         data['command'] = message.text
 
 
-@bot.message_handler(state=CityInfoState.selected_city,
-                     func=lambda message: message not in ['/start', 'help'])
+@bot.message_handler(state=CityInfoState.selected_city)
 def area(message: Message) -> None:
     """
     Функция, предназначенная для уточнения выбора района поиска отелей пользователем.
@@ -62,8 +62,7 @@ def area(message: Message) -> None:
                           chat_id=message.chat.id)
 
 
-@bot.message_handler(state=CityInfoState.min_max_price,
-                     func=lambda message: message not in ['/start', 'help'])
+@bot.message_handler(state=CityInfoState.min_max_price)
 def take_price(message: Message) -> None:
     """
     Функция, предназначенная для выбора пользователем желаемого диапазона цен из предоставленного ботом списка.
@@ -82,8 +81,7 @@ def take_price(message: Message) -> None:
                              reply_markup=reply.areas.get_areas(data['city_name']))
 
 
-@bot.message_handler(state=CityInfoState.min_max_local,
-                     func=lambda message: message not in ['/start', 'help'])
+@bot.message_handler(state=CityInfoState.min_max_local)
 def take_local(message: Message) -> None:
     """
     Функция, предназначенная для выбора пользователем желаемого диапазона удаленности отеля от центра в километрах
@@ -258,8 +256,7 @@ def total_hotels(call) -> None:
                           chat_id=call.message.chat.id)
 
 
-@bot.message_handler(state=CityInfoState.get_photos,
-                     func=lambda message: message not in ['/start', 'help'])
+@bot.message_handler(state=CityInfoState.get_photos)
 def ask_photo(message: Message) -> None:
     """
     Функция, предназначенная для опроса пользователя с целью получения информации о том, нужно ли выводить фотографии
@@ -273,7 +270,7 @@ def ask_photo(message: Message) -> None:
         bot.set_state(user_id=message.from_user.id,
                       state=CityInfoState.photo_output,
                       chat_id=message.chat.id)
-        
+
         with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
             data['total_hotels'] = int(message.text)
     else:
@@ -281,8 +278,7 @@ def ask_photo(message: Message) -> None:
                          reply_markup=reply.total_hotels.get_kb())
 
 
-@bot.message_handler(state=CityInfoState.photo_output,
-                     func=lambda message: message not in ['/start', 'help'])
+@bot.message_handler(state=CityInfoState.photo_output)
 def answer_photo(message: Message) -> None:
     """
     Функция, предназначенная для обработки ответа от пользователя о необходимости вывода фотографий отеля
@@ -300,16 +296,21 @@ def answer_photo(message: Message) -> None:
             bot.set_state(user_id=message.from_user.id,
                           state=CityInfoState.total_photos,
                           chat_id=message.chat.id)
-        
+
         elif message.text == "Нет":
-            get_results.results(message=message, data=data)
+            data['hotels'] = get_results.results(message=message, data=data, out_foto=False)
+            if not data['hotels']:
+                bot.send_message(message.from_user.id,
+                                 f'Произошла ошибка, начните поиска снова. Текущая команда: \n{data["command"]}')
+            command_date = str(datetime.utcfromtimestamp(message.date + 10800))
+            db_add_info.add(user_id=data['user_id'], command_date=command_date, command=data['command'],
+                            hotels=data['hotels'])
         else:
             bot.send_message(message.from_user.id, 'Просто нажмите на кнопку',
                              reply_markup=reply.out_photo.get_kb())
 
 
-@bot.message_handler(state=CityInfoState.total_photos,
-                     func=lambda message: message not in ['/start', 'help'])
+@bot.message_handler(state=CityInfoState.total_photos)
 def out_photo(message: Message) -> None:
     """
     Функция, предназначенная для поиска отелей по собранной от пользователя информации, если пользователь запросил
@@ -323,14 +324,22 @@ def out_photo(message: Message) -> None:
         with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
             data['total_photos'] = int(message.text)
 
-            get_results.results(message=message, data=data, out_foto=True)
+            data['hotels'] = get_results.results(message=message, data=data, out_foto=True)
+            if not data['hotels']:
+                bot.send_message(message.from_user.id,
+                                 f'Произошла ошибка, возможно необходимо уменьшить количество фотографий при выводе, '
+                                 f'начните поиска снова. Текущая команда: \n{data["command"]}')
+            else:
+                command_date = str(datetime.utcfromtimestamp(message.date + 10800))
+                db_add_info.add(user_id=data['user_id'], command_date=command_date, command=data['command'],
+                                hotels=data['hotels'])
+                bot.send_message(message.from_user.id, 'Вы можете ввести новую команду для поиска\n'
+                                                       f'Текущая команда "{data["command"]}"\n'
+                                                       f'Для получения справки -> "/help"')
             bot.set_state(user_id=message.from_user.id,
-                          state=CityInfoState.selected_city,
+                          state=CityInfoState.end,
                           chat_id=message.chat.id)
-            bot.send_message(message.from_user.id, 'Вы можете ввести другое название города для поиска '
-                                                   'по выбранной команде, либо ввести новую команду для поиска\n'
-                                                   f'Текущая команда "{data["command"]}"\n'
-                                                   f'"/help" для получения справки')
+
 
     else:
         bot.send_message(message.from_user.id, 'Просто нажмите на кнопку',
