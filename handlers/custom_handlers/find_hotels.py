@@ -41,26 +41,30 @@ def area(message: Message) -> None:
     календарь для выбора даты въезда и выезда
     """
     with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
-        for index, i_dict in enumerate(city_group.get_city_group(message.text)):
-            for city_name in i_dict:
-                data[city_name] = i_dict[city_name]
-        data['city_name'] = message.text
-        data['user_id'] = message.from_user.id
-        bot.send_message(message.from_user.id, 'Пожалуйста, уточните ваш выбор',
-                         reply_markup=reply.areas.get_areas(message.text))
+        if len(list(city_group.get_city_group(message.text))) > 0:
+            for index, i_dict in enumerate(city_group.get_city_group(message.text)):
+                for city_name in i_dict:
+                    data[city_name] = i_dict[city_name]
+            data['city_name'] = message.text
+            data['user_id'] = message.from_user.id
+            bot.send_message(message.from_user.id, 'Пожалуйста, уточните ваш выбор',
+                             reply_markup=reply.areas.get_areas(message.text))
 
-        if data['command'] == '/bestdeal':
-            bot.set_state(user_id=message.from_user.id,
-                          state=CityInfoState.min_max_price,
-                          chat_id=message.chat.id)
+            if data['command'] == '/bestdeal':
+                bot.set_state(user_id=message.from_user.id,
+                              state=CityInfoState.min_max_price,
+                              chat_id=message.chat.id)
+            else:
+                data['min_price'] = None
+                data['max_price'] = None
+                data['min_local'] = None
+                data['max_local'] = None
+                bot.set_state(user_id=message.from_user.id,
+                              state=CityInfoState.date_in,
+                              chat_id=message.chat.id)
         else:
-            data['min_price'] = None
-            data['max_price'] = None
-            data['min_local'] = None
-            data['max_local'] = None
-            bot.set_state(user_id=message.from_user.id,
-                          state=CityInfoState.date_in,
-                          chat_id=message.chat.id)
+            bot.send_message(message.from_user.id, 'Города с таким названием не найдено, '
+                                                   'попробуйте ввести другое название')
 
 
 @bot.message_handler(state=CityInfoState.min_max_price)
@@ -169,7 +173,7 @@ def date_in(message: Message) -> None:
                                                                       locale='ru').build()
                             bot.send_message(message.from_user.id, f"Выбираем дату", reply_markup=calendar)
                         else:
-                            bot.send_message(message.from_user.id, 'Просто нажмите на кнопку ниже1',
+                            bot.send_message(message.from_user.id, 'Просто нажмите на кнопку ниже',
                                              reply_markup=reply.min_max_local.take_local())
 
                     elif len(find_local) == 1:
@@ -183,14 +187,14 @@ def date_in(message: Message) -> None:
                                                                       locale='ru').build()
                             bot.send_message(message.from_user.id, f"Выбираем дату", reply_markup=calendar)
                         else:
-                            bot.send_message(message.from_user.id, 'Просто нажмите на кнопку ниже2',
+                            bot.send_message(message.from_user.id, 'Просто нажмите на кнопку ниже',
                                              reply_markup=reply.min_max_local.take_local())
                 else:
-                    bot.send_message(message.from_user.id, 'Просто нажмите на кнопку ниже3',
+                    bot.send_message(message.from_user.id, 'Просто нажмите на кнопку ниже',
                                      reply_markup=reply.min_max_local.take_local())
 
             else:
-                bot.send_message(message.from_user.id, 'Просто нажмите на кнопку ниже4',
+                bot.send_message(message.from_user.id, 'Просто нажмите на кнопку ниже',
                                  reply_markup=reply.areas.get_areas(data['city_name']))
 
 
