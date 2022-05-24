@@ -24,6 +24,7 @@ def city(message: Message) -> None:
     bot.send_message(message.from_user.id, f'Введите название города')
     with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
         data['command'] = message.text
+        data['command_date'] = str(datetime.utcfromtimestamp(message.date + 10800))
 
 
 @bot.message_handler(state=CityInfoState.selected_city)
@@ -301,9 +302,8 @@ def answer_photo(message: Message) -> None:
             data['hotels'] = get_results.results(message=message, data=data, out_foto=False)
             if not data['hotels']:
                 bot.send_message(message.from_user.id,
-                                 f'Произошла ошибка, начните поиска снова. Текущая команда: \n{data["command"]}')
-            command_date = str(datetime.utcfromtimestamp(message.date + 10800))
-            db_add_info.add(user_id=data['user_id'], command_date=command_date, command=data['command'],
+                                 f'Произошла ошибка, начните поиск снова. Текущая команда: \n{data["command"]}')
+            db_add_info.add(user_id=data['user_id'], command_date=data['command_date'], command=data['command'],
                             hotels=data['hotels'])
         else:
             bot.send_message(message.from_user.id, 'Просто нажмите на кнопку',
@@ -327,11 +327,10 @@ def out_photo(message: Message) -> None:
             data['hotels'] = get_results.results(message=message, data=data, out_foto=True)
             if not data['hotels']:
                 bot.send_message(message.from_user.id,
-                                 f'Произошла ошибка, возможно необходимо уменьшить количество фотографий при выводе, '
+                                 f'Произошла ошибка, возможно стоит изменить параметры поиска, '
                                  f'начните поиска снова. Текущая команда: \n{data["command"]}')
             else:
-                command_date = str(datetime.utcfromtimestamp(message.date + 10800))
-                db_add_info.add(user_id=data['user_id'], command_date=command_date, command=data['command'],
+                db_add_info.add(user_id=data['user_id'], command_date=data['command_date'], command=data['command'],
                                 hotels=data['hotels'])
                 bot.send_message(message.from_user.id, 'Вы можете ввести новую команду для поиска\n'
                                                        f'Текущая команда "{data["command"]}"\n'
@@ -339,7 +338,6 @@ def out_photo(message: Message) -> None:
             bot.set_state(user_id=message.from_user.id,
                           state=CityInfoState.end,
                           chat_id=message.chat.id)
-
 
     else:
         bot.send_message(message.from_user.id, 'Просто нажмите на кнопку',
