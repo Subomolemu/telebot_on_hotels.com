@@ -14,7 +14,7 @@ def results(message: Message, data: Dict, sort_order: str = 'PRICE', out_foto: b
     :param out_foto: True для вывода фото и False, если вывод фото не нужен
     """
     bot.send_message(message.from_user.id, 'Выполняется поиск по заданным параметрам')
-    dist_id = data['dest_id']
+    dest_id = data['dest_id']
     if data['command'] == '/highprice':
         sort_order = 'PRICE_HIGHEST_FIRST'
     elif data['command'] in ['/bestdeal', '/lowprice']:
@@ -26,7 +26,7 @@ def results(message: Message, data: Dict, sort_order: str = 'PRICE', out_foto: b
         page += 1
         bot.send_message(message.from_user.id, 'Пожалуйста, подождите...')
         try:
-            total_iter = (sum(1 for _ in hotel_information.find_hotels(dest_id=dist_id,
+            total_iter = (sum(1 for _ in hotel_information.find_hotels(dest_id=dest_id,
                                                                        date_in=data['date_in'],
                                                                        date_out=data['date_out'],
                                                                        price_min=data['min_price'],
@@ -39,7 +39,7 @@ def results(message: Message, data: Dict, sort_order: str = 'PRICE', out_foto: b
             if total_iter == 0:
                 bot.send_message(message.from_user.id, 'Бот закончил поиск')
                 return hotel_list
-            for i, i_date in enumerate(hotel_information.find_hotels(dest_id=dist_id,
+            for i, i_date in enumerate(hotel_information.find_hotels(dest_id=dest_id,
                                                                      date_in=data['date_in'],
                                                                      date_out=data['date_out'],
                                                                      price_min=data['min_price'],
